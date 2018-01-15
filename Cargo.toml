@@ -3,6 +3,12 @@ name = "garden"
 version = "0.1.0"
 authors = ["mtso <mtso@tuta.io>"]
 
+[dependencies]
+cairo-rs = { version = "^0", features = ["png"] }
+gio = "0.3.0"
+gdk = "0.7.0"
+pango = "0.3.0"
+
 [dependencies.gtk]
 version = "0.3.0"
 features = ["v3_10"]
