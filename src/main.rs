@@ -3,13 +3,41 @@ extern crate gdk;
 extern crate gio;
 extern crate gtk;
 extern crate pango;
+extern crate chrono;
 
 use gdk::ScreenExt; // import get_rgba_visual
 use gio::prelude::*;
+use gio::MenuExt;
 use gtk::prelude::*;
 use gtk::*;
+use chrono::Local;
 
 use std::env::args;
+
+// make moving clones into closures more convenient
+macro_rules! clone {
+    (@param _) => ( _ );
+    (@param $x:ident) => ( $x );
+    ($($n:ident),+ => move || $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move || $body
+        }
+    );
+    ($($n:ident),+ => move |$($p:tt),+| $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move |$(clone!(@param $p),)+| $body
+        }
+    );
+}
+
+fn render_map() -> String {
+    format!(
+        "{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}\n{0} {0} {0} {0} {0} {0} {0}",
+        Local::now().timestamp() % 10,
+    )
+}
 
 fn build_ui(application: &gtk::Application) {
     let window = ApplicationWindow::new(application);
@@ -24,22 +52,24 @@ fn build_ui(application: &gtk::Application) {
     window.set_default_size(500, 500);
     window.set_app_paintable(true); // crucial for transparency
 
-    let fixed = Fixed::new();
-    window.add(&fixed);
+    let grid = Grid::new();
+    window.add(&grid);
 
     // 💣💣💣💣
     let map = ". . . . . . .\n. . . . . . .\n. . . . . . .\n. . . . . . .\n. . . . . . .\n. . . . . . .\n. . . . . . .";
     let label = Label::new(map);
-    // let text_view = TextView::new();
-    // let buffer = text_view.get_buffer().unwrap();
-    // buffer.set_text(map);
+    grid.add(&label);
 
-    let bytelen: u32 = label.get_label().unwrap().len() as u32;
+    label.set_vexpand(true);
+    label.set_hexpand(true);
 
     // !!!!!!!!!!!!!!!
     // Style text view
     // !!!!!!!!!!!!!!!
     let attr_list = pango::AttrList::new();
+
+    // Get the byte-length (indexes, not character offsets) of the map string buffer.
+    let bytelen: u32 = label.get_label().unwrap().len() as u32;
 
     // Defaults to black?
     // let mut attr = pango::Attribute::new_background(0, 0, 0)
@@ -54,7 +84,7 @@ fn build_ui(application: &gtk::Application) {
     attr.set_end_index(bytelen);
     attr_list.insert(attr);
 
-    let mut attr = pango::Attribute::new_family("'Menlo', monospace")
+    let mut attr = pango::Attribute::new_family("monospace")
             .expect("Couldn't create new font family");
     attr.set_start_index(0);
     attr.set_end_index(bytelen);
@@ -68,13 +98,58 @@ fn build_ui(application: &gtk::Application) {
 
     label.set_attributes(&attr_list);
 
-    fixed.add(&label);
+    // Animate text label contents.
+    let tick = move || {
+        let map = render_map();
+        label.set_text(&map);
+        gtk::Continue(true)
+    };
+
+    gtk::timeout_add_seconds(1, tick);
+
+    add_menu(application);
+
+    add_actions(application, &window);
 
     window.show_all();
 }
 
+fn add_menu(app: &gtk::Application) {
+    let menu = gio::Menu::new();
+    let about = gio::Menu::new();
+    about.append("About", "app.about");
+    let quit = gio::Menu::new();
+    quit.append("Quit", "app.quit");
+
+    menu.append_section("About", &about);
+    menu.append_section("Quit", &quit);
+
+    app.set_app_menu(&menu);
+}
+
+fn add_actions(app: &gtk::Application, window: &gtk::ApplicationWindow) {
+    let quit = gio::SimpleAction::new("quit", None);
+    quit.connect_activate(clone!(window => move |_, _| {
+        window.destroy();
+    }));
+
+    let about = gio::SimpleAction::new("about", None);
+    about.connect_activate(clone!(window => move |_, _| {
+        let p = AboutDialog::new();
+        p.set_title("About");
+        p.set_program_name("Tick");
+        p.set_comments(Some("Made by mtso"));
+        p.set_transient_for(Some(&window));
+        p.run();
+        p.destroy();
+    }));
+
+    app.add_action(&quit);
+    app.add_action(&about);
+}
+
 fn main() {
-    let application = gtk::Application::new("com.github.transparent_main_window",
+    let application = gtk::Application::new("io.mtso.textgrid",
                                             gio::ApplicationFlags::empty())
                                        .expect("Failed to initialize GTK...");
 

@@ -1,7 +1,7 @@
 [package]
-name = "garden"
-version = "0.1.0"
-authors = ["mtso <mtso@tuta.io>"]
+name = "Tick"
+version = "1.0.0"
+authors = ["mtso <~@mtso.io>"]
 
 [dependencies]
 cairo-rs = { version = "^0", features = ["png"] }
