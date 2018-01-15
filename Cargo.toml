@@ -1,0 +1,8 @@
+[package]
+name = "garden"
+version = "0.1.0"
+authors = ["mtso <mtso@tuta.io>"]
+
+[dependencies.gtk]
+version = "0.3.0"
+features = ["v3_10"]
