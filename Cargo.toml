@@ -2,7 +2,7 @@
 name = "tick"
 version = "1.0.0"
 authors = ["mtso <~@mtso.io>"]
-description = "Digit ticker desktop app to demo GTK+ 3 on Rust."
+publish = false
 
 [package.metadata.bundle]
 name = "Tick"
