@@ -1,14 +1,22 @@
 [package]
-name = "Tick"
+name = "tick"
 version = "1.0.0"
 authors = ["mtso <~@mtso.io>"]
+description = "Digit ticker desktop app to demo GTK+ 3 on Rust."
 
 [dependencies]
 cairo-rs = { version = "^0", features = ["png"] }
 gio = "0.3.0"
 gdk = "0.7.0"
 pango = "0.3.0"
+chrono = "0.4.0"
 
 [dependencies.gtk]
 version = "0.3.0"
 features = ["v3_10"]
+
+[package.metadata.bundle]
+name = "Tick"
+identifier = "io.mtso.rs.Tick"
+icon = ["assets/Tick.icns"]
+copyright = "Copyright 2018 Matthew Tso"
